@@ -10,10 +10,10 @@ import android.widget.FrameLayout;
 import android.widget.ListView;
 
 /**
+ *
  * Created by freeman on 2016/11/1.
  */
-
-public class PinnedHeaderListView extends FrameLayout {
+public class PinnedHeaderListView extends FrameLayout implements IListView{
     private IGetListView mIGetListView = null;
     private FrameLayout mWrapPinnedHeader = null;
     private Context mContext;
@@ -49,15 +49,34 @@ public class PinnedHeaderListView extends FrameLayout {
         mIGetListView = iGetListView;
         ViewGroup viewGroup = mIGetListView.getListView();
         if (viewGroup instanceof ListView) {
-            mListView = new ListViewProxy((ListView) viewGroup);
+            mListView = new ListViewImpl((ListView) viewGroup);
         } else if (viewGroup instanceof RecyclerView) {
-            mListView = new RecyclerViewProxy((RecyclerView) viewGroup);
+            mListView = new RecyclerViewImpl((RecyclerView) viewGroup);
         } else {
             throw new RuntimeException("getListView() only supports ListView or RecyclerView");
         }
-        addView(viewGroup, 0);  // 作为第一个子view
+        addView(viewGroup, 0);
     }
 
+    @Override
+    public void removePinnedHeader() {
+        if(mListView == null) return;
+        mListView.removePinnedHeader();
+    }
+
+    @Override
+    public boolean isShowingPinnedHeader() {
+        if(mListView == null) return false;
+        return mListView.isShowingPinnedHeader();
+    }
+
+    @Override
+    public ViewGroup getListView() {
+        if(mListView == null) return null;
+        return mListView.getListView();
+    }
+
+    @Override
     public void setPinnedHeader(View v) {
         if (mListView == null) {
             throw new NullPointerException("mListView is null, must call setListView(IGetListView iGetListView) first");
@@ -115,13 +134,13 @@ public class PinnedHeaderListView extends FrameLayout {
         container.addView(pinnedView);
     }
 
-    private class ListViewProxy implements IListView {
+    private class ListViewImpl implements IListView {
         private ListView mListView;
         private OnListViewScrollListener mOnScrollListener;
         private ViewGroup mPinnedHeader;
         private boolean attachToListView = true;
 
-        public ListViewProxy(ListView listView) {
+        private ListViewImpl(ListView listView) {
             mListView = listView;
 
             mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
@@ -164,9 +183,11 @@ public class PinnedHeaderListView extends FrameLayout {
         }
 
         @Override
-        public void removePinnedHeader(ViewGroup pinnedHeader) {
-            mListView.removeHeaderView(pinnedHeader);
-            mPinnedHeader = null;
+        public void removePinnedHeader() {
+            if(mPinnedHeader != null) {
+                mListView.removeHeaderView(mPinnedHeader);
+                mPinnedHeader = null;
+            }
         }
 
         @Override
@@ -180,8 +201,8 @@ public class PinnedHeaderListView extends FrameLayout {
         }
 
         @Override
-        public void setPinnedHeader(ViewGroup pinnedHeader) {
-            mPinnedHeader = pinnedHeader;
+        public void setPinnedHeader(View pinnedHeader) {
+            mPinnedHeader = (ViewGroup) pinnedHeader;
             mListView.addHeaderView(mPinnedHeader);
             mPinnedPosition = mListView.getHeaderViewsCount();
         }
@@ -193,13 +214,13 @@ public class PinnedHeaderListView extends FrameLayout {
         }
     }
 
-    private class RecyclerViewProxy implements IListView {
+    private class RecyclerViewImpl implements IListView {
         private RecyclerView mRecyclerView = null;
         private ViewGroup mPinnedHeader;
         private OnRecyclerViewScrollListener mOnScrollListener;
         private boolean attachToListView = true;
 
-        public RecyclerViewProxy(RecyclerView recyclerView) {
+        private RecyclerViewImpl(RecyclerView recyclerView) {
             mRecyclerView = recyclerView;
             mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
@@ -245,10 +266,10 @@ public class PinnedHeaderListView extends FrameLayout {
         }
 
         @Override
-        public void removePinnedHeader(ViewGroup pinnedHeader) {
+        public void removePinnedHeader() {
             if(mRecyclerView.getAdapter() instanceof WrapAdapter) {
                 WrapAdapter adapter = (WrapAdapter)mRecyclerView.getAdapter();
-                adapter.removeHeaderView(pinnedHeader);
+                adapter.removeHeaderView(mPinnedHeader);
             }
             mPinnedHeader = null;
         }
@@ -264,8 +285,8 @@ public class PinnedHeaderListView extends FrameLayout {
         }
 
         @Override
-        public void setPinnedHeader(ViewGroup pinnedHeader) {
-            mPinnedHeader = pinnedHeader;
+        public void setPinnedHeader(View pinnedHeader) {
+            mPinnedHeader = (ViewGroup) pinnedHeader;
             if (mRecyclerView.getAdapter() instanceof WrapAdapter) {
                 ((WrapAdapter) mRecyclerView.getAdapter()).addHeaderView(mPinnedHeader);
                 mPinnedPosition = ((WrapAdapter) mRecyclerView.getAdapter()).getHeaderViewSize();
@@ -294,8 +315,7 @@ public class PinnedHeaderListView extends FrameLayout {
     public static class OnRecyclerViewScrollListener extends RecyclerView.OnScrollListener implements OnScrollListener {
     }
 
-    public interface OnScrollListener {
-    }
+    public interface OnScrollListener {}
 
     public interface IGetListView {
         /**
@@ -306,12 +326,4 @@ public class PinnedHeaderListView extends FrameLayout {
         ViewGroup getListView();
     }
 
-    private interface IListView {
-        void setPinnedHeader(ViewGroup pinnedHeader);
-        void removePinnedHeader(ViewGroup pinnedHeader);
-        void setOnScrollListener(OnScrollListener onScrollListener);
-        boolean isShowingPinnedHeader();
-        ViewGroup getListView();
-
-    }
 }

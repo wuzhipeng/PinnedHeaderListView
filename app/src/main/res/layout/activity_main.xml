@@ -14,7 +14,7 @@
         android:id="@+id/PinnedListViewActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
+        android:padding="15dp"
         android:text="PinnedListViewActivity"
         android:textSize="15dp" />
 
@@ -23,7 +23,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/PinnedListViewActivity"
-        android:padding="5dp"
+        android:padding="15dp"
         android:text="PinnedRecyclerViewActivity"
         android:textSize="15dp" />
 

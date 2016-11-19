@@ -14,8 +14,8 @@ import java.util.List;
  */
 
 public class HAdapter extends BaseAdapter {
-    List<String> mList = new ArrayList<>();
-    Context context = null;
+    private List<String> mList = new ArrayList<>();
+    private Context context = null;
     public HAdapter(Context c) {
         context = c;
         for(int i = 0; i < 45; i++) {
